@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>멘션 기능 성과지표 분석 보고서</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #FFD43B; --primary-dark: #FFD43B; --accent: #1e3a5f; --success: #22C55E; --warning: #F59E0B; --danger: #EF4444; --purple: #A78BFA; --cyan: #64B5F6; --gray-900: #111827; --gray-700: #374151; --gray-500: #6B7280; --gray-300: #E5E7EB; --gray-100: #F3F4F6; --gray-50: #F9FAFB; --white: #FFFFFF; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.7; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 48px 32px; }
+
+        /* Nav */
+        .nav-sidebar { position: fixed; left: 0; top: 0; width: 200px; height: 100vh; background: #f8fafc; padding: 16px 0; overflow-y: auto; z-index: 1000; border-right: 1px solid #e2e8f0; }
+        .nav-brand { color: var(--accent); font-size: 13px; font-weight: 700; padding: 0 12px 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px; }
+        .nav-item { display: block; padding: 6px 12px; color: #64748b; text-decoration: none; font-size: 13px; transition: all 0.2s; border-left: 2px solid transparent; }
+        .nav-item:hover { background: #f1f5f9; color: var(--accent); border-left-color: var(--accent); }
+        .nav-group { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
+
+        .main-content { margin-left: 200px; }
+
+        /* Header */
+        header { text-align: center; margin-bottom: 48px; padding-top: 20px; }
+        header h1 { font-size: 28px; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
+        header h1 span { color: var(--gray-500); font-weight: 400; font-size: 14px; }
+        header p { color: var(--gray-500); font-size: 14px; }
+
+        /* Section */
+        .section { margin-bottom: 40px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .section-icon { font-size: 24px; }
+        .section-title { font-size: 18px; font-weight: 700; color: var(--gray-900); }
+        .section-sub { font-size: 13px; color: var(--gray-500); margin-left: auto; }
+
+        /* Hero */
+        .hero { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); border-radius: 24px; padding: 48px; margin-bottom: 40px; color: var(--white); }
+        .hero-badge { display: inline-block; padding: 6px 14px; background: var(--primary); color: var(--gray-900); border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 20px; }
+        .hero-title { font-size: 26px; font-weight: 700; line-height: 1.5; margin-bottom: 12px; }
+        .hero-title strong { color: var(--primary); }
+        .hero-sub { font-size: 14px; opacity: 0.8; margin-bottom: 40px; }
+        .hero-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .hero-stat { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; text-align: center; }
+        .hero-stat.highlight { background: rgba(255,212,59,0.15); border: 2px solid var(--primary); }
+        .hero-value { font-size: 36px; font-weight: 800; color: var(--primary); }
+        .hero-value span { font-size: 16px; }
+        .hero-value.white { color: var(--white); }
+        .hero-value.green { color: #86EFAC; }
+        .hero-label { font-size: 13px; opacity: 0.9; margin-top: 8px; }
+        .hero-label-sub { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+
+        /* Cards */
+        .card { background: var(--white); border-radius: 16px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--gray-100); }
+        .card-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+        /* KPI Section */
+        .kpi-section { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); border-radius: 24px; padding: 48px; margin-bottom: 40px; }
+        .kpi-header { text-align: center; margin-bottom: 40px; }
+        .kpi-header-badge { display: inline-block; padding: 8px 20px; background: var(--primary); color: var(--gray-900); border-radius: 24px; font-size: 13px; font-weight: 800; margin-bottom: 16px; }
+        .kpi-header-title { font-size: 24px; font-weight: 800; color: var(--white); margin-bottom: 8px; }
+        .kpi-header-sub { font-size: 13px; color: rgba(255,255,255,0.7); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .kpi-card { background: var(--white); border-radius: 20px; padding: 28px 24px; text-align: center; position: relative; overflow: hidden; }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--primary); }
+        .kpi-category { font-size: 12px; font-weight: 800; color: #CA8A04; margin-bottom: 16px; text-transform: uppercase; }
+        .kpi-value { font-size: 48px; font-weight: 900; line-height: 1; margin-bottom: 12px; color: #CA8A04; }
+        .kpi-value span { font-size: 24px; font-weight: 700; }
+        .kpi-title { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 8px; }
+        .kpi-formula { font-size: 12px; color: #374151; padding: 10px 12px; background: var(--gray-50); border-radius: 8px; margin-top: 12px; line-height: 1.5; }
+
+        /* Chart */
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-card { background: var(--white); border-radius: 16px; padding: 28px; border: 1px solid var(--gray-100); }
+        .chart-title { font-size: 14px; font-weight: 700; color: var(--gray-900); margin-bottom: 20px; }
+        .chart-container { height: 300px; }
+
+        /* Table */
+        .table-card { background: var(--white); border-radius: 16px; padding: 28px; border: 1px solid var(--gray-100); overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { text-align: left; padding: 12px 10px; background: var(--gray-50); font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; white-space: nowrap; }
+        .data-table td { padding: 12px 10px; font-size: 13px; color: var(--gray-700); border-bottom: 1px solid var(--gray-100); }
+        .data-table .num { font-weight: 700; color: var(--gray-900); }
+        .accuracy-bar { height: 6px; background: var(--gray-100); border-radius: 3px; overflow: hidden; width: 80px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        .accuracy-fill { height: 100%; border-radius: 3px; }
+        .accuracy-fill.high { background: var(--success); }
+        .accuracy-fill.mid { background: var(--warning); }
+        .accuracy-fill.low { background: var(--danger); }
+
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+        .tag.error { background: #FEE2E2; color: #DC2626; }
+        .tag.ok { background: #DCFCE7; color: #16A34A; }
+        .tag.warn { background: #FEF3C7; color: #D97706; }
+        .tag.info { background: #DBEAFE; color: #2563EB; }
+
+        /* Thread Detail */
+        .thread-list { display: flex; flex-direction: column; gap: 12px; }
+        .thread-item { background: var(--gray-50); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; }
+        .thread-num { width: 32px; height: 32px; background: var(--accent); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+        .thread-num.error { background: var(--danger); }
+        .thread-num.ok { background: var(--success); }
+        .thread-num.unknown { background: var(--gray-400); }
+        .thread-info { flex: 1; }
+        .thread-id { font-size: 12px; color: var(--gray-500); font-family: monospace; }
+        .thread-fields { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+        .field-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #FEE2E2; color: #DC2626; }
+        .field-tag.limit { background: #EDE9FE; color: #7C3AED; }
+
+        /* Conclusion */
+        .conclusion { background: var(--white); border-radius: 16px; padding: 40px; border: 2px solid var(--primary); text-align: center; }
+        .conclusion-text { font-size: 15px; color: var(--gray-700); line-height: 2; }
+        .conclusion-text strong { color: var(--gray-900); }
+
+        /* Funnel */
+        .funnel { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .funnel-step { display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-radius: 12px; width: 100%; max-width: 500px; }
+        .funnel-step.s1 { background: #DBEAFE; }
+        .funnel-step.s2 { background: #E0E7FF; }
+        .funnel-step.s3 { background: #EDE9FE; }
+        .funnel-step.s4 { background: #FCE7F3; }
+        .funnel-step.s5 { background: #FEE2E2; }
+        .funnel-label { font-size: 13px; font-weight: 600; color: var(--gray-700); flex: 1; }
+        .funnel-count { font-size: 18px; font-weight: 800; color: var(--accent); }
+        .funnel-pct { font-size: 12px; color: var(--gray-500); }
+        .funnel-arrow { font-size: 18px; color: var(--gray-400); }
+
+        /* Improvement */
+        .improve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .improve-card { background: var(--gray-50); border-radius: 12px; padding: 20px; border-left: 4px solid var(--accent); }
+        .improve-rank { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+        .improve-title { font-size: 14px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+        .improve-desc { font-size: 12px; color: var(--gray-500); line-height: 1.6; }
+        .improve-card.p1 { border-left-color: var(--danger); }
+        .improve-card.p1 .improve-rank { color: var(--danger); }
+        .improve-card.p2 { border-left-color: var(--warning); }
+        .improve-card.p2 .improve-rank { color: var(--warning); }
+        .improve-card.p3 { border-left-color: var(--cyan); }
+        .improve-card.p3 .improve-rank { color: var(--cyan); }
+
+        footer { text-align: center; padding: 40px 0; color: var(--gray-500); font-size: 12px; }
+
+        @media (max-width: 1024px) {
+            .nav-sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .hero-grid, .kpi-grid, .card-grid-2, .card-grid-3, .chart-grid, .improve-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav-sidebar">
+    <div class="nav-brand">멘션 성과지표 분석</div>
+    <a class="nav-item" href="#overview">전체 요약</a>
+    <a class="nav-item" href="#kpi">핵심 KPI</a>
+    <a class="nav-item" href="#funnel">분석 퍼널</a>
+    <a class="nav-item" href="#field-accuracy">필드별 파싱 정확도</a>
+    <a class="nav-item" href="#error-distribution">오류 유형 분포</a>
+    <a class="nav-item" href="#thread-detail">건별 상세 분석</a>
+    <div class="nav-group"></div>
+    <a class="nav-item" href="#improvement">개선 방향</a>
+    <a class="nav-item" href="#conclusion">결론</a>
+</nav>
+
+<div class="main-content">
+<div class="container">
+
+    <!-- Header -->
+    <header>
+        <h1>멘션 기능 성과지표 분석 보고서 <span>PRICE-012</span></h1>
+        <p>분석 기간: 2026.01 ~ 2026.04 | 채널: ai_운영팀-메시지-자동파싱 | 분석일: 2026.04.07</p>
+    </header>
+
+    <!-- 1. Hero: 전체 요약 -->
+    <section id="overview">
+    <div class="hero">
+        <div class="hero-badge">MENTION FEATURE PERFORMANCE</div>
+        <div class="hero-title">
+            멘션 가격 추출 기능<br>
+            <strong>쓰레드 수준 정확도 96.3%</strong> 달성
+        </div>
+        <div class="hero-sub">
+            전체 623건의 유효 쓰레드 중 23건 오류 확인 (3.7%) — 23건 전수 오류 유형 식별 완료
+        </div>
+        <div class="hero-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="hero-stat">
+                <div class="hero-value white">623</div>
+                <div class="hero-label">유효 쓰레드</div>
+                <div class="hero-label-sub">봇 가격 추출 응답 있음</div>
+            </div>
+            <div class="hero-stat highlight">
+                <div class="hero-value">96.3<span>%</span></div>
+                <div class="hero-label">쓰레드 정확도</div>
+                <div class="hero-label-sub">600 / 623 무오류</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-value green">86.1<span>%</span></div>
+                <div class="hero-label">필드 정확도</div>
+                <div class="hero-label-sub">오류 23건 전수 분석 기준</div>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- 2. KPI Cards -->
+    <section id="kpi">
+    <div class="kpi-section">
+        <div class="kpi-header">
+            <div class="kpi-header-badge">KEY PERFORMANCE INDICATORS</div>
+            <div class="kpi-header-title">핵심 성과 지표</div>
+            <div class="kpi-header-sub">멘션 가격 추출 기능의 정확도 및 안정성 측정</div>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="kpi-card">
+                <div class="kpi-category">THREAD ACCURACY</div>
+                <div class="kpi-value">96.3<span>%</span></div>
+                <div class="kpi-title">쓰레드 수준 정확도</div>
+                <div class="kpi-formula">
+                    (623 - 23) / 623<br>
+                    전체 유효 쓰레드 중 무오류 비율
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-category">FIELD ACCURACY (오류 건)</div>
+                <div class="kpi-value">86.1<span>%</span></div>
+                <div class="kpi-title">필드 정확도 — 오류 건 내</div>
+                <div class="kpi-formula">
+                    (276 - 32) / 276<br>
+                    23건 × 12항목, 오류 32개
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-category">FIELD ACCURACY (전체)</div>
+                <div class="kpi-value">99.6<span>%</span></div>
+                <div class="kpi-title">필드 정확도 — 전체 기준</div>
+                <div class="kpi-formula">
+                    (7476 - 32) / 7476<br>
+                    623건 × 12항목, 오류 32개
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-category">ERROR RATE</div>
+                <div class="kpi-value">3.7<span>%</span></div>
+                <div class="kpi-title">오류 발생률</div>
+                <div class="kpi-formula">
+                    23 / 623<br>
+                    사용자 코멘트 발생 쓰레드 비율
+                </div>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- 3. Funnel: 분석 퍼널 -->
+    <section id="funnel">
+    <div class="section-header">
+        <div class="section-icon">🔍</div>
+        <div class="section-title">분석 퍼널</div>
+        <div class="section-sub">전체 메시지 → 오류 건 추적 과정</div>
+    </div>
+    <div class="card" style="margin-bottom: 40px;">
+        <div class="funnel">
+            <div class="funnel-step s1">
+                <div class="funnel-label">유효 쓰레드 (봇 가격 추출 응답)</div>
+                <div class="funnel-count">623</div>
+                <div class="funnel-pct">100%</div>
+            </div>
+            <div class="funnel-arrow">↓</div>
+            <div class="funnel-step s3">
+                <div class="funnel-label">사람 코멘트 있는 쓰레드</div>
+                <div class="funnel-count">29</div>
+                <div class="funnel-pct">4.7%</div>
+            </div>
+            <div class="funnel-arrow">↓</div>
+            <div class="funnel-step s4">
+                <div class="funnel-label">비-이슈 코멘트 제외 (일상대화/API오류 등)</div>
+                <div class="funnel-count">23</div>
+                <div class="funnel-pct">3.7%</div>
+            </div>
+            <div class="funnel-arrow">↓</div>
+            <div class="funnel-step s5">
+                <div class="funnel-label">오류 확정 쓰레드 (전수)</div>
+                <div class="funnel-count">23</div>
+                <div class="funnel-pct">3.7%</div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--gray-500);">
+            23건 전수 오류 — 코멘트가 달린 건은 모두 봇 추출 결과에 문제가 있어 보충/수정한 것으로 판단
+        </div>
+    </div>
+    </section>
+
+    <!-- 4. 필드별 파싱 정확도 -->
+    <section id="field-accuracy">
+    <div class="section-header">
+        <div class="section-icon">📊</div>
+        <div class="section-title">필드별 파싱 정확도</div>
+        <div class="section-sub">오류 23건 전수 분석 완료</div>
+    </div>
+
+    <div class="chart-grid" style="margin-bottom: 24px;">
+        <div class="chart-card">
+            <div class="chart-title">필드별 정확도 (%)</div>
+            <div class="chart-container">
+                <canvas id="fieldAccuracyChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">필드별 오류 건수</div>
+            <div class="chart-container">
+                <canvas id="fieldErrorChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>필드</th>
+                    <th>설명</th>
+                    <th>오류</th>
+                    <th>오류 건 내 정확도<br><span style="font-weight:400;font-size:11px;">(23건 기준)</span></th>
+                    <th></th>
+                    <th>전체 정확도<br><span style="font-weight:400;font-size:11px;">(623건 기준)</span></th>
+                    <th></th>
+                    <th>등급</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="num">weekBit</td>
+                    <td>요일 구분</td>
+                    <td class="num" style="color:#EF4444;">8</td>
+                    <td class="num">65.2%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill low" style="width:65.2%"></div></div></td>
+                    <td class="num">98.7%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:98.7%"></div></div></td>
+                    <td><span class="tag error">취약</span></td>
+                </tr>
+                <tr>
+                    <td class="num">bookSTime</td>
+                    <td>시작 시간</td>
+                    <td class="num" style="color:#EF4444;">6</td>
+                    <td class="num">73.9%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill low" style="width:73.9%"></div></div></td>
+                    <td class="num">99.0%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99%"></div></div></td>
+                    <td><span class="tag error">취약</span></td>
+                </tr>
+                <tr>
+                    <td class="num">bookETime</td>
+                    <td>종료 시간</td>
+                    <td class="num" style="color:#EF4444;">6</td>
+                    <td class="num">73.9%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill low" style="width:73.9%"></div></div></td>
+                    <td class="num">99.0%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99%"></div></div></td>
+                    <td><span class="tag error">취약</span></td>
+                </tr>
+                <tr>
+                    <td class="num">greenFeeNO</td>
+                    <td>정상 가격</td>
+                    <td class="num" style="color:#EF4444;">4</td>
+                    <td class="num">82.6%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill mid" style="width:82.6%"></div></div></td>
+                    <td class="num">99.4%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.4%"></div></div></td>
+                    <td><span class="tag warn">주의</span></td>
+                </tr>
+                <tr>
+                    <td class="num">bookEDate</td>
+                    <td>종료 일자</td>
+                    <td class="num" style="color:#F59E0B;">1</td>
+                    <td class="num">95.7%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:95.7%"></div></div></td>
+                    <td class="num">99.8%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.8%"></div></div></td>
+                    <td><span class="tag ok">양호</span></td>
+                </tr>
+                <tr>
+                    <td class="num">bookName</td>
+                    <td>예약 조건</td>
+                    <td class="num" style="color:#F59E0B;">1</td>
+                    <td class="num">95.7%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:95.7%"></div></div></td>
+                    <td class="num">99.8%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.8%"></div></div></td>
+                    <td><span class="tag ok">양호</span></td>
+                </tr>
+                <tr>
+                    <td class="num">greenFeeDC</td>
+                    <td>할인 가격</td>
+                    <td class="num" style="color:#F59E0B;">1</td>
+                    <td class="num">95.7%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:95.7%"></div></div></td>
+                    <td class="num">99.8%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.8%"></div></div></td>
+                    <td><span class="tag ok">양호</span></td>
+                </tr>
+                <tr>
+                    <td class="num">bookSDate</td>
+                    <td>시작 일자</td>
+                    <td>0</td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td><span class="tag ok">완벽</span></td>
+                </tr>
+                <tr>
+                    <td class="num">holeCnt</td>
+                    <td>홀 수</td>
+                    <td>0</td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td><span class="tag ok">완벽</span></td>
+                </tr>
+                <tr>
+                    <td class="num">courseName</td>
+                    <td>코스 이름</td>
+                    <td>0</td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td class="num">100%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:100%"></div></div></td>
+                    <td><span class="tag ok">완벽</span></td>
+                </tr>
+                <tr style="background: #FEF3C7;">
+                    <td class="num">레코드 누락</td>
+                    <td>데이터 커버리지</td>
+                    <td class="num" style="color:#F59E0B;">3</td>
+                    <td class="num">87.0%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill mid" style="width:87%"></div></div></td>
+                    <td class="num">99.5%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.5%"></div></div></td>
+                    <td><span class="tag warn">주의</span></td>
+                </tr>
+                <tr style="background: #FEE2E2;">
+                    <td class="num">추출 실패</td>
+                    <td>이미지 인식</td>
+                    <td class="num" style="color:#EF4444;">2</td>
+                    <td class="num">91.3%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill mid" style="width:91.3%"></div></div></td>
+                    <td class="num">99.7%</td>
+                    <td><div class="accuracy-bar"><div class="accuracy-fill high" style="width:99.7%"></div></div></td>
+                    <td><span class="tag warn">주의</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </section>
+
+    <!-- 5. 오류 유형 분포 -->
+    <section id="error-distribution" style="margin-top: 40px;">
+    <div class="section-header">
+        <div class="section-icon">🎯</div>
+        <div class="section-title">오류 유형 분석</div>
+        <div class="section-sub">23건 오류의 유형별 분류</div>
+    </div>
+
+    <div class="chart-grid" style="margin-bottom: 24px;">
+        <div class="chart-card">
+            <div class="chart-title">오류 유형 분포 (쓰레드 기준, 중복 포함)</div>
+            <div class="chart-container">
+                <canvas id="errorTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">쓰레드 분류 (23건)</div>
+            <div class="chart-container">
+                <canvas id="threadClassChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 40px;">
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">📅</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">요일 구분</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--danger);">8건</div>
+            <div style="font-size: 11px; color: var(--gray-500); margin-top: 6px;">
+                weekBit<br>주중/주말/공휴일
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">⏰</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">시간 범위</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--danger);">12건</div>
+            <div style="font-size: 11px; color: var(--gray-500); margin-top: 6px;">
+                bookSTime 6 + bookETime 6<br>1부/2부/3부 해석
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">💰</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">가격</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--purple);">5건</div>
+            <div style="font-size: 11px; color: var(--gray-500); margin-top: 6px;">
+                greenFeeNO 4 + DC 1<br>만원 단위/구분 혼동
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">📋</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">레코드 누락</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--warning);">3건</div>
+            <div style="font-size: 11px; color: var(--gray-500); margin-top: 6px;">
+                3부/오후/특정날짜<br>데이터 미추출
+            </div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">🖼️</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px;">추출 실패</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--gray-500);">2건</div>
+            <div style="font-size: 11px; color: var(--gray-500); margin-top: 6px;">
+                이미지 인식 실패<br>재전송으로 해결
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- 6. 건별 상세 분석 -->
+    <section id="thread-detail">
+    <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div class="section-title">건별 상세 분석</div>
+        <div class="section-sub">23건 전체 목록</div>
+    </div>
+    <div class="card" style="margin-bottom: 40px;">
+        <div class="thread-list">
+            <!-- 필드 식별 오류 15건 -->
+            <div class="thread-item">
+                <div class="thread-num error">1</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260402_162830 (이미지)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">주중/주말/요일 구분 누락</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">2</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260402_154513</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookEDate</span>
+                        <span class="field-tag">weekBit</span>
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">오류 4필드</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">4</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260401_093126</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookSTime</span>
+                    </div>
+                </div>
+                <span class="tag error">3부 시작시간 0000→1600 (×8)</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">6</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260313_095929 (이미지)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">greenFeeNO</span>
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">토/일 가격 혼동 + 잘못된 시간범위</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">7</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260309_130959</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">주중/주말 미구분</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">8</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260307_095925</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">1/2부 시간범위 오류</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">9</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260305_103116</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">greenFeeNO</span>
+                    </div>
+                </div>
+                <span class="tag error">가격 1만원씩 차이 (거의 전건)</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">11</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260226_113039</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">주중/금/토/일 세분화 미반영</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">12</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260225_165744</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">1부 시간범위 오류</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">13</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260225_124247</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">greenFeeNO</span>
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">가격+시간 복합 오류</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">17</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260114_115614</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">사용자 의도 미반영</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">19</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260113_094457</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookName</span>
+                    </div>
+                </div>
+                <span class="tag error">조건 미반영</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">20</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260110_090628</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">greenFeeNO</span>
+                    </div>
+                </div>
+                <span class="tag error">가격 1만원씩 차이</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">21</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260109_094700</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">주중/주말 구분 오류</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">23</div>
+                <div class="thread-info">
+                    <div class="thread-id">mention_20260107_091000</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">greenFeeDC</span>
+                    </div>
+                </div>
+                <span class="tag error">정상가/할인가 구분 혼동</span>
+            </div>
+
+            <!-- 레코드 누락 3건 -->
+            <div class="thread-item" style="background: #FEF3C7;">
+                <div class="thread-num error" style="background: var(--warning);">3</div>
+                <div class="thread-info">
+                    <div class="thread-id">03/24 — 이미지 기반 (35건 추출)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag" style="background:#FEF3C7;color:#D97706;">레코드 누락</span>
+                    </div>
+                </div>
+                <span class="tag warn">4/6(월) 날짜 데이터 미추출</span>
+            </div>
+            <div class="thread-item" style="background: #FEF3C7;">
+                <div class="thread-num error" style="background: var(--warning);">7</div>
+                <div class="thread-info">
+                    <div class="thread-id">03/11 — 이미지 기반 (112건 추출)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">bookSTime</span>
+                        <span class="field-tag">bookETime</span>
+                    </div>
+                </div>
+                <span class="tag error">"21일 오후타임 적혀있지 않은데" — 누락</span>
+            </div>
+            <div class="thread-item" style="background: #FEF3C7;">
+                <div class="thread-num error" style="background: var(--warning);">8</div>
+                <div class="thread-info">
+                    <div class="thread-id">03/10 — 이미지 기반 (4건 추출)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag" style="background:#FEF3C7;color:#D97706;">레코드 누락</span>
+                    </div>
+                </div>
+                <span class="tag warn">"3/11~12 3부 7만, 3/13 3부 8만" 미추출</span>
+            </div>
+
+            <!-- 추가 이미지/재전송 3건 -->
+            <div class="thread-item" style="background: #F5F3FF;">
+                <div class="thread-num error" style="background: var(--gray-400);">16</div>
+                <div class="thread-info">
+                    <div class="thread-id">02/27 — 이미지 인식 실패 → 재전송 성공 (20건)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag" style="background:#E5E7EB;color:#374151;">추출 실패</span>
+                    </div>
+                </div>
+                <span class="tag info">첫 시도 실패, 이미지 재전송으로 해결</span>
+            </div>
+            <div class="thread-item" style="background: #F5F3FF;">
+                <div class="thread-num error" style="background: var(--warning);">17</div>
+                <div class="thread-info">
+                    <div class="thread-id">02/23 — 추가 이미지 전송 (26건→16건)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag" style="background:#FEF3C7;color:#D97706;">레코드 누락</span>
+                    </div>
+                </div>
+                <span class="tag warn">첫 이미지 불완전 → 보충 이미지 추가</span>
+            </div>
+            <div class="thread-item" style="background: #F5F3FF;">
+                <div class="thread-num error" style="background: var(--gray-400);">25</div>
+                <div class="thread-info">
+                    <div class="thread-id">01/09 — 이미지 인식 실패 → 재전송 성공 (4건)</div>
+                    <div class="thread-fields">
+                        <span class="field-tag" style="background:#E5E7EB;color:#374151;">추출 실패</span>
+                    </div>
+                </div>
+                <span class="tag info">첫 시도 실패, 이미지 재전송으로 해결</span>
+            </div>
+
+            <!-- weekBit 추가 2건 -->
+            <div class="thread-item">
+                <div class="thread-num error">20</div>
+                <div class="thread-info">
+                    <div class="thread-id">02/13 — 6건 추출</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">"공휴일 적용이 어려워 미사용"</span>
+            </div>
+            <div class="thread-item">
+                <div class="thread-num error">24</div>
+                <div class="thread-info">
+                    <div class="thread-id">01/20 벨라45cc — 2건 추출</div>
+                    <div class="thread-fields">
+                        <span class="field-tag">weekBit</span>
+                    </div>
+                </div>
+                <span class="tag error">"주중/주말 구분을 못함"</span>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- 7. 개선 방향 -->
+    <section id="improvement">
+    <div class="section-header">
+        <div class="section-icon">🚀</div>
+        <div class="section-title">개선 방향</div>
+        <div class="section-sub">오류 빈도 기준 우선순위</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 40px;">
+        <div class="improve-card p1">
+            <div class="improve-rank">P1 — CRITICAL (8건, 34.8%)</div>
+            <div class="improve-title">weekBit 요일 구분 강화</div>
+            <div class="improve-desc">
+                오류 8건 (정확도 65.2%) — 가장 빈번한 오류<br><br>
+                - 주중/주말 미구분 (이미지에 명시된 경우 포함)<br>
+                - 금/토/일 세분화 누락<br>
+                - 공휴일 처리 불가 (기능 한계)
+            </div>
+        </div>
+        <div class="improve-card p1">
+            <div class="improve-rank">P1 — CRITICAL (12건, 52.2%)</div>
+            <div class="improve-title">시간 범위 파싱 개선</div>
+            <div class="improve-desc">
+                bookSTime 6건 + bookETime 6건 (정확도 73.9%)<br><br>
+                - 1부/2부/3부 시간대 매핑 오류<br>
+                - 3부 시작시간 0000→1600 문제<br>
+                - 오후타임 누락, 잘못된 시간범위(1330→1329)
+            </div>
+        </div>
+        <div class="improve-card p2">
+            <div class="improve-rank">P2 — HIGH (5건)</div>
+            <div class="improve-title">가격 정밀도 향상</div>
+            <div class="improve-desc">
+                greenFeeNO 4건 + greenFeeDC 1건 (82.6%)<br><br>
+                - 만원 단위 반올림/절사 로직<br>
+                - 토/일 가격 혼동 (이미지 다른 날 가격 복사)<br>
+                - 정상가/할인가 구분 혼동
+            </div>
+        </div>
+        <div class="improve-card p3">
+            <div class="improve-rank">P3 — MEDIUM (5건)</div>
+            <div class="improve-title">이미지 인식 및 데이터 커버리지</div>
+            <div class="improve-desc">
+                레코드 누락 3건 + 추출 실패 2건<br><br>
+                - 3부/오후/특정날짜 데이터 미추출<br>
+                - 이미지 인식 실패 (재전송으로 해결)<br>
+                - 이미지 내 복수 테이블 파싱 안정성
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- 8. 결론 -->
+    <section id="conclusion">
+    <div class="conclusion">
+        <div style="font-size: 36px; margin-bottom: 16px;">📊</div>
+        <div class="conclusion-text">
+            멘션 가격 추출 기능은 <strong>쓰레드 수준 96.3% 정확도</strong>를 달성하여<br>
+            전체 623건 중 <strong>23건(3.7%) 오류</strong>가 확인되었습니다. (23건 전수 분석 완료)<br><br>
+            오류 유형: <strong>weekBit(요일) 8건</strong>, <strong>시간(bookSTime/ETime) 12건</strong>,
+            <strong>가격(greenFee) 5건</strong>, 레코드 누락 3건, 추출 실패 2건<br>
+            <strong>weekBit(65.2%)</strong>와 <strong>Time(73.9%)</strong> 개선만으로 전체 오류의 약 60%를 해소할 수 있습니다.<br><br>
+            <strong>bookSDate, holeCnt, courseName</strong>은 <strong>100% 정확도</strong>를 유지하고 있어<br>
+            기본 추출 엔진의 안정성은 충분히 검증되었습니다.
+        </div>
+    </div>
+    </section>
+
+    <footer>
+        멘션 기능 성과지표 분석 보고서 | 분석 기간: 2026.01 ~ 2026.04 | PRICE-012
+    </footer>
+
+</div>
+</div>
+
+<!-- Charts -->
+<script>
+// 필드별 정확도 바 차트
+new Chart(document.getElementById('fieldAccuracyChart'), {
+    type: 'bar',
+    data: {
+        labels: ['weekBit', 'bookSTime', 'bookETime', 'greenFeeNO', '레코드누락', '추출실패', 'bookEDate', 'bookName', 'greenFeeDC', 'bookSDate', 'holeCnt', 'courseName'],
+        datasets: [{
+            label: '정확도 (%)',
+            data: [65.2, 73.9, 73.9, 82.6, 87.0, 91.3, 95.7, 95.7, 95.7, 100, 100, 100],
+            backgroundColor: [
+                '#EF4444', '#EF4444', '#EF4444', '#F59E0B',
+                '#F59E0B', '#A78BFA',
+                '#22C55E', '#22C55E', '#22C55E',
+                '#1e3a5f', '#1e3a5f', '#1e3a5f'
+            ],
+            borderRadius: 6,
+            barThickness: 24
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { min: 0, max: 100, grid: { color: '#F3F4F6' }, ticks: { callback: v => v + '%' } },
+            y: { grid: { display: false } }
+        }
+    }
+});
+
+// 필드별 오류 건수 차트
+new Chart(document.getElementById('fieldErrorChart'), {
+    type: 'bar',
+    data: {
+        labels: ['weekBit', 'bookSTime', 'bookETime', 'greenFeeNO', '레코드누락', '추출실패', 'bookEDate', 'bookName', 'greenFeeDC'],
+        datasets: [{
+            label: '오류 건수',
+            data: [8, 6, 6, 4, 3, 2, 1, 1, 1],
+            backgroundColor: ['#EF4444', '#EF4444', '#EF4444', '#F59E0B', '#F97316', '#9CA3AF', '#A78BFA', '#A78BFA', '#A78BFA'],
+            borderRadius: 6,
+            barThickness: 30
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F3F4F6' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// 오류 유형 도넛 차트
+new Chart(document.getElementById('errorTypeChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['요일(weekBit)', '시간(Time)', '가격(Fee)', '레코드 누락', '추출 실패', '기타(Date/Name/DC)'],
+        datasets: [{
+            data: [8, 12, 5, 3, 2, 3],
+            backgroundColor: ['#F59E0B', '#EF4444', '#A78BFA', '#F97316', '#9CA3AF', '#64B5F6'],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 12 } } }
+        }
+    }
+});
+
+// 쓰레드 분류 도넛 차트
+new Chart(document.getElementById('threadClassChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['필드 오류', '레코드 누락', '추출 실패'],
+        datasets: [{
+            data: [18, 3, 2],
+            backgroundColor: ['#EF4444', '#F97316', '#9CA3AF'],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 12 } } }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
